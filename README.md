@@ -1,4 +1,4 @@
-# LPS de E-commerce (Backend)
+# LPS de E-commerce
 
 Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce web. O foco está em mostrar como componentes reutilizáveis são combinados em microserviços para formar variantes funcionais (minimal, standard, premium) com recomendação de produtos.
 
@@ -107,7 +107,6 @@ Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce we
    # Via variável de ambiente
    LPS_VARIANT=minimal node scripts/start-variant.js
    ```
-3. Cada serviço imprime a porta ao iniciar. Para encerrar, pressione `Ctrl+C`.
 
 ## Testes Manuais
 
@@ -118,7 +117,6 @@ npm run start:minimal
 curl http://localhost:4101/health
 curl "http://localhost:4101/products?q=notebook"
 ```
-> Esperado: apenas o serviço de catálogo responde; outros endpoints retornam conexão recusada.
 
 ### 2. Variante `standard`
 ```bash
@@ -129,7 +127,7 @@ curl -X POST http://localhost:4103/orders \
   -d '{"userId":"u-1","items":[{"productId":"p-100","quantity":1}]}'
 curl http://localhost:4103/orders
 ```
-> Esperado: pedido criado com preço e status `created`. Estoque do produto reduzido.
+> pedido criado com preço e status `created`. Estoque do produto reduzido.
 
 ### 3. Variante `premium`
 ```bash
@@ -140,4 +138,4 @@ curl -X POST http://localhost:4103/orders \
   -d '{"userId":"u-3","items":[{"productId":"p-102","quantity":1},{"productId":"p-104","quantity":1}]}'
 curl "http://localhost:4104/recommendations?userId=u-3"
 ```
-> Esperado: recomendações priorizam categorias/tag relacionadas e evoluem após registrar o pedido (co-compra aumenta o score dos itens envolvidos).
+> recomendações priorizam categorias/tag relacionadas e evoluem após registrar o pedido (co-compra aumenta o score dos itens envolvidos).
