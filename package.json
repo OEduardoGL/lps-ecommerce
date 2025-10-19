@@ -1,0 +1,26 @@
+{
+  "name": "web-ecommerce-lps",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Linha de Produto de Software para e-commerce web com microserviços e recomendações.",
+  "main": "scripts/start-variant.js",
+  "scripts": {
+    "start": "node scripts/start-variant.js --variant=standard",
+    "start:variant": "node scripts/start-variant.js",
+    "start:minimal": "node scripts/start-variant.js --variant=minimal",
+    "start:standard": "node scripts/start-variant.js --variant=standard",
+    "start:premium": "node scripts/start-variant.js --variant=premium"
+  },
+  "keywords": [
+    "lps",
+    "ecommerce",
+    "microservices",
+    "backend"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "uuid": "^9.0.1"
+  }
+}

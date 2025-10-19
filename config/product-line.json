@@ -1,0 +1,38 @@
+{
+  "features": {
+    "catalog": {
+      "service": "catalog",
+      "port": 4101,
+      "description": "Catálogo de produtos com operações de listagem, busca e detalhes."
+    },
+    "users": {
+      "service": "users",
+      "port": 4102,
+      "description": "Perfis básicos de clientes e preferências de categorias."
+    },
+    "orders": {
+      "service": "orders",
+      "port": 4103,
+      "description": "Criação e acompanhamento simplificados de pedidos."
+    },
+    "recommendation": {
+      "service": "recommendation",
+      "port": 4104,
+      "description": "Sugestões de produtos com base em categorias e histórico leve."
+    }
+  },
+  "variants": {
+    "minimal": {
+      "description": "Catálogo puro para vitrine simples sem persistência de cliente nem recomendações.",
+      "features": ["catalog"]
+    },
+    "standard": {
+      "description": "E-commerce tradicional com cadastro de usuários e pedidos.",
+      "features": ["catalog", "users", "orders"]
+    },
+    "premium": {
+      "description": "Variante completa incluindo recomendações de produtos.",
+      "features": ["catalog", "users", "orders", "recommendation"]
+    }
+  }
+}
