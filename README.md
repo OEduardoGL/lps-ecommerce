@@ -107,8 +107,8 @@ Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce we
    # Via variável de ambiente
    LPS_VARIANT=minimal node scripts/start-variant.js
    ```
-
-## Testes Manuais
+   
+## Testes
 
 ### 1. Variante `minimal`
 ```bash
