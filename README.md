@@ -1,56 +1,85 @@
 # LPS de E-commerce
 
-Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce web. O foco está em mostrar como componentes reutilizáveis são combinados em microserviços para formar variantes funcionais (minimal, standard, premium) com recomendação de produtos.
+Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce web.
 
 ## Conceitos Aplicados
-- **Linha de Produto de Software (LPS)**: coleção de variantes construídas sobre um conjunto comum de artefatos. Cada variante seleciona um subconjunto de features no arquivo `config/product-line.json`.
-- **Modelagem de Features**: catálogo, usuários, pedidos e recomendação são tratados como features independentes, podendo ser ativadas/desativadas por variante.
-- **Componentes Compartilhados**: implementações únicas (dados em memória, estoque, perfis, pedidos, motor de recomendação) reutilizadas pelos serviços.
-- **Microserviços HTTP**: cada feature ativa expõe uma API Express isolada, iniciada apenas quando necessária para a variante.
-- **Recomendação baseada em Similaridade e Co-compra**: motor simples que combina categorias, tags, preferências do usuário e histórico de pedidos para sugerir itens.
+- **Linha de Produto de Software (LPS)** – a configuração de features (`catalog`, `users`, `orders`, `recommendation`) define variantes `minimal`, `standard` e `premium` em `config/product-line.json`.
+- **Componentização** – catálogos, perfis de usuários, pedidos e motor de recomendação moram em `shared/` e são reutilizados por múltiplos serviços.
+- **Microserviços** – cada feature é exposta por um serviço Express independente, iniciado isoladamente ou pelo orquestrador.
+- **Persistência** – dados são armazenados em PostgreSQL (`db/init.sql` cria o esquema e popula dados base).
+- **Recomendação híbrida** – combina similaridade de categorias/tags, preferências do usuário e contagem de co-compra obtida a partir dos pedidos registrados.
 
-## Estrutura do Projeto
+## Estrutura
 ```
 .
-├── config/product-line.json   # Definição de features e variantes da LPS
-├── shared/                    # Componentes e dados reaproveitados
-│   ├── components/            # Catálogo, usuários, pedidos, recomendação
-│   └── data/                  # Dados de exemplo (produtos e usuários)
-├── services/                  # Microserviços Express
-│   ├── catalog/
-│   ├── users/
-│   ├── orders/
-│   └── recommendation/
-├── scripts/start-variant.js   # Orquestrador das variantes
+├── config/product-line.json   # Definição das features e variantes
+├── db/init.sql                # Script SQL para criar tabelas e dados iniciais
+├── docker-compose.yml         # Define Postgres + microserviços containerizados
+├── services/                  # APIs Express (catalog, users, orders, recommendation)
+├── shared/                    # Componentes reutilizados e conexão com o banco
+├── scripts/                   # Orquestrador da LPS e utilitários de seed
+├── Dockerfile 
 └── README.md
 ```
 
-### Modelo de Variantes
+## Variantes da LPS
+| Variante  | Descrição                                                        | Serviços (portas)                                |
+|-----------|------------------------------------------------------------------|--------------------------------------------------|
+| `minimal` | Apenas vitrine de produtos                                       | `catalog` (4101)                                 |
+| `standard`| Cadastro de clientes + pedidos (sem recomendações)               | `catalog` (4101), `users` (4102), `orders` (4103) |
+| `premium` | Todos os recursos incluindo recomendações de produtos            | `catalog` (4101), `users` (4102), `orders` (4103), `recommendation` (4104) |
 
-| Variante | Descrição | Serviços (portas) |
-|----------|-----------|--------------------|
-| `minimal` | Vitrine simples sem clientes ou pedidos | `catalog` (4101) |
-| `standard` | Operação tradicional com usuários e pedidos | `catalog` (4101), `users` (4102), `orders` (4103) |
-| `premium` | Todos os recursos, incluindo recomendações | `catalog` (4101), `users` (4102), `orders` (4103), `recommendation` (4104) |
+## Persistência em PostgreSQL
+### Esquema
+- `products`: catálogo com preço, estoque, categorias e tags (`TEXT[]`).
+- `users`: clientes com preferências (`TEXT[]`).
+- `orders` e `order_items`: pedidos com itens, status e histórico.
 
-## Arquitetura em Camadas
-1. **Componentes compartilhados (`shared/components`)**
-   - `catalog`: lista/busca produtos, controla estoque.
-   - `userProfiles`: CRUD simples em memória para usuários.
-   - `orderStore`: registra pedidos e status.
-   - `recommendationEngine`: calcula recomendações e registra co-compra.
-2. **Dados (`shared/data`)**: estado em memória populado com produtos e usuários fictícios.
-3. **Serviços (`services/*`)**: cada serviço injeta os componentes relevantes e expõe rotas REST.
-4. **Orquestração (`scripts/start-variant.js`)**: lê a variante, instancia os serviços necessários e compartilha dependências (ex.: `recommendationEngine` é injetado nos pedidos para registrar compras, e no serviço de recomendação para gerar respostas).
+`npm run db:seed` para recomeçar com o estado base em um banco local.
 
-## APIs por Serviço
+## Execução Local (Node + Postgres)
+1. **Suba/PostgreSQL**: use `docker compose up db`.
+2. **Instale dependências**:
+   ```bash
+   npm install
+   ```
+3. **Prepare os dados (recomendado)** — certifique-se de que o banco está acessível (ex.: `docker compose up -d db`):
+   ```bash
+   npm run db:seed
+   ```
+4. **Inicie uma variante**:
+   ```bash
+   npm run start:minimal      # catálogo
+   npm run start:standard     # catálogo + usuários + pedidos
+   npm run start:premium      # todos os serviços
+   ```
+   O orquestrador lê `config/product-line.json` e sobe apenas os serviços necessários na mesma instância Node.
 
-### Catálogo – `http://localhost:4101`
+## Execução com Docker Compose
+```bash
+docker compose up --build
+```
+Serviços expostos:
+- `catalog`: http://localhost:4101
+- `users`: http://localhost:4102
+- `orders`: http://localhost:4103
+- `recommendation`: http://localhost:4104
+
+O container `db` inicializa o PostgreSQL com `db/init.sql`. Todos os serviços compartilham a mesma imagem Node (definida no `Dockerfile`) com comandos diferentes.
+
+### Encerrando
+```bash
+docker compose down
+```
+Use `docker compose down -v` para apagar o volume e recriar o banco do zero.
+
+## APIs Disponíveis
+### Catálogo (`:4101`)
 - `GET /health`
-- `GET /products` — filtros opcionais `q`, `category`, `tag`.
+- `GET /products?q=&category=&tag=`
 - `GET /products/:id`
 
-### Usuários – `http://localhost:4102`
+### Usuários (`:4102`)
 - `GET /health`
 - `GET /users`
 - `GET /users/:id`
@@ -63,7 +92,7 @@ Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce we
   }
   ```
 
-### Pedidos – `http://localhost:4103`
+### Pedidos (`:4103`)
 - `GET /health`
 - `GET /orders`
 - `GET /orders/:id`
@@ -81,31 +110,16 @@ Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce we
   { "status": "sent" }
   ```
 
-### Recomendações – `http://localhost:4104`
+### Recomendações (`:4104`)
 - `GET /health`
 - `GET /recommendations?userId=&productId=&limit=`
 - `GET /recommendations/related/:productId`
 
-## Instalação e Execução
-1. Instale dependências:
+## Testes Manuais 
+1. **Variante minimal**
    ```bash
-   npm install
-   ```
-2. Inicie a variante desejada:
-   ```bash
-   # Variante padrão (standard)
-   npm start
-
-   # Variantes específicas
    npm run start:minimal
-   npm run start:standard
-   npm run start:premium
-
-   # Ou usando o orquestrador diretamente
-   node scripts/start-variant.js --variant=premium
-
-   # Via variável de ambiente
-   LPS_VARIANT=minimal node scripts/start-variant.js
+   curl http://localhost:4101/products
    ```
    
 ## Testes

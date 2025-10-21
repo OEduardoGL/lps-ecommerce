@@ -1,62 +1,75 @@
 const { createService } = require('../../shared/server');
-const fallbackCatalog = require('../../shared/components/catalog');
+const db = require('../../shared/db');
+const catalog = require('../../shared/components/catalog');
 const orderStore = require('../../shared/components/orderStore');
 
 function routes(app, dependencies) {
-  const catalog = dependencies?.catalog ?? fallbackCatalog;
   const recommendation = dependencies?.recommendation ?? null;
 
-  app.get('/orders', (req, res) => {
-    res.json({ data: orderStore.listOrders() });
-  });
-
-  app.get('/orders/:id', (req, res) => {
-    const order = orderStore.findById(req.params.id);
-    if (!order) {
-      return res.status(404).json({ error: 'Pedido não encontrado' });
-    }
-    return res.json(order);
-  });
-
-  app.post('/orders', (req, res) => {
-    const { userId, items } = req.body ?? {};
-    const reserved = [];
+  app.get('/orders', async (req, res) => {
     try {
-      if (!Array.isArray(items) || items.length === 0) {
-        throw new Error('Pedido precisa ter itens');
-      }
+      const orders = await orderStore.listOrders();
+      res.json({ data: orders });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 
-      const preparedItems = items.map((item) => {
-        const product = catalog.findById(item.productId);
-        if (!product) {
-          throw new Error(`Produto ${item.productId} não encontrado`);
+  app.get('/orders/:id', async (req, res) => {
+    try {
+      const order = await orderStore.findById(req.params.id);
+      if (!order) {
+        return res.status(404).json({ error: 'Pedido não encontrado' });
+      }
+      return res.json(order);
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/orders', async (req, res) => {
+    const { userId, items } = req.body ?? {};
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Pedido precisa ter itens' });
+    }
+
+    try {
+      const order = await db.withTransaction(async (client) => {
+        const preparedItems = [];
+        for (const item of items) {
+          const product = await catalog.findById(item.productId, client);
+          if (!product) {
+            throw new Error(`Produto ${item.productId} não encontrado`);
+          }
+          const quantity = item.quantity ?? 1;
+          await catalog.reserveStock(product.id, quantity, client);
+          preparedItems.push({
+            productId: product.id,
+            quantity,
+            price: product.price
+          });
         }
-        const quantity = item.quantity ?? 1;
-        catalog.reserveStock(product.id, quantity);
-        reserved.push({ productId: product.id, quantity });
-        return {
-          productId: product.id,
-          quantity,
-          price: product.price
-        };
+        const createdOrder = await orderStore.createOrder({ userId, items: preparedItems }, client);
+        return createdOrder;
       });
 
-      const order = orderStore.createOrder({ userId, items: preparedItems });
-
       if (recommendation) {
-        recommendation.registerPurchase(order);
+        await recommendation.registerPurchase(order);
       }
 
       res.status(201).json(order);
     } catch (error) {
-      reserved.forEach((item) => catalog.releaseStock(item.productId, item.quantity));
       res.status(400).json({ error: error.message });
     }
   });
 
-  app.patch('/orders/:id/status', (req, res) => {
+  app.patch('/orders/:id/status', async (req, res) => {
     try {
-      const order = orderStore.updateStatus(req.params.id, req.body?.status);
+      const status = req.body?.status;
+      if (!status) {
+        return res.status(400).json({ error: 'Status é obrigatório' });
+      }
+      const order = await orderStore.updateStatus(req.params.id, status);
       res.json(order);
     } catch (error) {
       res.status(400).json({ error: error.message });
