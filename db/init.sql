@@ -45,7 +45,27 @@ INSERT INTO products (id, name, description, price, categories, tags, stock) VAL
   ('p-103', 'Cafeteira SmartBrew', 'Cafeteira inteligente com integração por aplicativo', 899.00,
     ARRAY['casa', 'cozinha'], ARRAY['smart-home'], 12),
   ('p-104', 'Teclado Mecânico RGB Nimbus', 'Teclado mecânico com switches azuis e iluminação RGB', 499.90,
-    ARRAY['eletronicos', 'perifericos'], ARRAY['gamer'], 30);
+    ARRAY['eletronicos', 'perifericos'], ARRAY['gamer'], 30),
+  ('p-105', 'Smartwatch PulseFit', 'Relógio inteligente com monitoramento de saúde e GPS', 1299.90,
+    ARRAY['eletronicos', 'wearables'], ARRAY['fitness', 'lancamento'], 20),
+  ('p-106', 'Monitor UltraWide 34', 'Monitor UltraWide de 34 polegadas com resolução UWQHD, HDR e 144Hz', 3499.00,
+    ARRAY['eletronicos', 'computadores'], ARRAY['homeoffice', 'produtividade'], 10),
+  ('p-107', 'Console RetroPlay', 'Console retrô com 200 jogos clássicos e saída HDMI', 699.00,
+    ARRAY['eletronicos', 'gamer'], ARRAY['retro', 'diversao'], 18),
+  ('p-108', 'Smart Speaker EchoSound', 'Caixa de som inteligente com assistente virtual e som 360º', 499.00,
+    ARRAY['eletronicos', 'audio'], ARRAY['iot', 'smart-home'], 22),
+  ('p-109', 'Panela de Pressão Digital ChefEasy', 'Panela elétrica com 12 programas e timer programável', 599.90,
+    ARRAY['casa', 'cozinha'], ARRAY['praticidade', 'smart-home'], 16),
+  ('p-110', 'Aspirador Robô CleanBot S2', 'Robô aspirador com mapeamento inteligente e recarga automática', 1899.00,
+    ARRAY['casa', 'smart-home'], ARRAY['automacao', 'limpeza'], 9),
+  ('p-111', 'Cadeira Ergonômica ErgoFlex', 'Cadeira com apoio lombar ajustável e tecido respirável', 1299.90,
+    ARRAY['escritorio', 'homeoffice'], ARRAY['ergonomia', 'produtividade'], 14),
+  ('p-112', 'Kit de Iluminação Smart Glow', 'Kit com 3 lâmpadas inteligentes multicoloridas', 349.90,
+    ARRAY['casa', 'smart-home'], ARRAY['iot', 'decoracao'], 40),
+  ('p-113', 'Câmera de Segurança Wi-Fi SafeCam', 'Câmera 1080p com visão noturna e detecção de movimento', 449.90,
+    ARRAY['seguranca', 'smart-home'], ARRAY['iot', 'monitoramento'], 28),
+  ('p-114', 'Tablet EduKids 10', 'Tablet infantil com controle parental e jogos educativos', 1199.00,
+    ARRAY['eletronicos', 'educacao'], ARRAY['infantil', 'controle-parental'], 17);
 
 INSERT INTO users (id, name, email, favorite_categories) VALUES
   ('u-1', 'Ana Lima', 'ana@example.com', ARRAY['eletronicos', 'gamer']),

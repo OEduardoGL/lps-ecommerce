@@ -11,6 +11,34 @@ const catalogComponent = require('../shared/components/catalog');
 const recommendationComponent = require('../shared/components/recommendationEngine');
 
 const CONFIG_PATH = path.join(__dirname, '..', 'config', 'product-line.json');
+const ENV_PATH = path.join(__dirname, '..', '.env');
+
+function loadEnvFile() {
+  try {
+    const raw = fs.readFileSync(ENV_PATH, 'utf-8');
+    raw
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('#'))
+      .forEach((line) => {
+        const eqIndex = line.indexOf('=');
+        if (eqIndex === -1) {
+          return;
+        }
+        const key = line.slice(0, eqIndex).trim();
+        const value = line.slice(eqIndex + 1).trim();
+        if (key && !(key in process.env)) {
+          process.env[key] = value;
+        }
+      });
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.warn('Não foi possível carregar .env:', error.message);
+    }
+  }
+}
+
+loadEnvFile();
 
 function loadConfig() {
   const raw = fs.readFileSync(CONFIG_PATH, 'utf-8');
