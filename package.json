@@ -14,7 +14,8 @@
     "service:users": "node services/users/server.js",
     "service:orders": "node services/orders/server.js",
     "service:recommendation": "node services/recommendation/server.js",
-    "db:seed": "node scripts/seed.js"
+    "db:seed": "node scripts/seed.js",
+    "dev:full": "node scripts/dev-full.js"
   },
   "keywords": [
     "lps",

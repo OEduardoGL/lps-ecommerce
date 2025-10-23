@@ -9,7 +9,7 @@ Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce we
 - **Persistência** – dados são armazenados em PostgreSQL (`db/init.sql` cria o esquema e popula dados base).
 - **Recomendação híbrida** – combina similaridade de categorias/tags, preferências do usuário e contagem de co-compra obtida a partir dos pedidos registrados.
 
-## Estrutura
+## Estrutura Geral
 ```
 .
 ├── config/product-line.json   # Definição das features e variantes
@@ -18,6 +18,7 @@ Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce we
 ├── services/                  # APIs Express (catalog, users, orders, recommendation)
 ├── shared/                    # Componentes reutilizados e conexão com o banco
 ├── scripts/                   # Orquestrador da LPS e utilitários de seed
+├── front/                     # SPA em React (catálogo, clientes, pedidos)
 ├── Dockerfile 
 └── README.md
 ```
@@ -37,41 +38,94 @@ Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce we
 
 `npm run db:seed` para recomeçar com o estado base em um banco local.
 
-## Execução Local (Node + Postgres)
-1. **Suba/PostgreSQL**: use `docker compose up db`.
-2. **Instale dependências**:
+## Arquitetura do Front-end
+O SPA em `front/` é organizado por camadas:
+
+```
+front/src
+├── app/            # Shell da aplicação, layout e rotas
+├── features/       # Catálogo, clientes e pedidos (páginas + componentes próprios)
+└── shared/         # UI reutilizável, contextos, hooks, clients REST (catalog/users/orders/recommendations)
+```
+
+Tecnologias principais: React 18 + Vite, React Router, Tailwind + shadcn/ui, TanStack Query e Context API para estado global (carrinho).
+
+## Configuração de Ambiente
+1. Instale dependências na raiz (`npm install`) e no front (`cd front && npm install`).
+2. Defina a variante padrão copiando o exemplo de variáveis:
+   ```bash
+   cp .env.example .env
+   ```
+   Ajuste `LPS_VARIANT` para `minimal`, `standard` ou `premium`. Esse valor é usado pelos scripts `npm run start:variant` e `npm run dev:full`.  
+   > Se o arquivo `.env` não estiver presente, adotamos `standard` automaticamente.
+3. Para o front, existem variáveis opcionais em `front/.env.example` (URLs das APIs).
+
+## Como Executar o Sistema
+
+### Backend local (Node + PostgreSQL)
+1. Suba o PostgreSQL:
+   ```bash
+   docker compose up -d db
+   ```
+2. Instale dependências do monorepo:
    ```bash
    npm install
    ```
-3. **Prepare os dados (recomendado)** — certifique-se de que o banco está acessível (ex.: `docker compose up -d db`):
+3. (Opcional) Popule o banco:
    ```bash
    npm run db:seed
    ```
-4. **Inicie uma variante**:
+4. Inicie a variante desejada:
    ```bash
    npm run start:minimal      # catálogo
    npm run start:standard     # catálogo + usuários + pedidos
-   npm run start:premium      # todos os serviços
+   npm run start:premium      # + recomendações
+   # ou respeitando o .env:
+   npm run start:variant      # usa LPS_VARIANT definido no .env
    ```
-   O orquestrador lê `config/product-line.json` e sobe apenas os serviços necessários na mesma instância Node.
+   O orquestrador em `scripts/start-variant.js` lê `config/product-line.json` e ativa apenas os serviços selecionados.
 
-## Execução com Docker Compose
+### Backend com Docker Compose
 ```bash
 docker compose up --build
 ```
-Serviços expostos:
-- `catalog`: http://localhost:4101
-- `users`: http://localhost:4102
-- `orders`: http://localhost:4103
-- `recommendation`: http://localhost:4104
+Portas expostas:
+- Catalog: http://localhost:4101
+- Users: http://localhost:4102
+- Orders: http://localhost:4103
+- Recommendation (premium): http://localhost:4104
 
-O container `db` inicializa o PostgreSQL com `db/init.sql`. Todos os serviços compartilham a mesma imagem Node (definida no `Dockerfile`) com comandos diferentes.
-
-### Encerrando
+Finalize com:
 ```bash
-docker compose down
+docker compose down        # encerra serviços
+docker compose down -v     # encerra e remove volume do banco
 ```
-Use `docker compose down -v` para apagar o volume e recriar o banco do zero.
+
+Para (re)popular o banco enquanto os containers estiverem rodando:
+```bash
+docker compose run --rm catalog node scripts/seed.js
+```
+
+### Front-end (SPA)
+1. Certifique-se de que os microserviços estão no ar (por script ou docker).
+2. Em outro terminal:
+   ```bash
+   cd front
+   npm install        # primeira vez
+   npm run dev
+   ```
+3. Acesse http://localhost:8080.
+
+No modo dev o Vite cria proxies `/api/catalog|users|orders|recommendations -> http://localhost:4101-4104`. Se precisar apontar para hosts diferentes, copie `front/.env.example` para `front/.env` e informe `VITE_API_*`.
+
+### Rodando tudo com um único comando
+Para subir backend (respeitando `LPS_VARIANT` do `.env`) **e** o front ao mesmo tempo:
+```bash
+npm run dev:full
+```
+Esse comando mantém os dois processos em paralelo, com logs identificados como `backend` e `frontend`.
+
+> Observação: se estiver utilizando `docker compose up`, não execute `npm run start:*` ou `npm run dev:full` ao mesmo tempo, pois as portas 4101–4104 já estarão ocupadas pelos serviços containerizados.
 
 ## APIs Disponíveis
 ### Catálogo (`:4101`)
@@ -142,6 +196,14 @@ curl -X POST http://localhost:4103/orders \
 curl http://localhost:4103/orders
 ```
 > pedido criado com preço e status `created`. Estoque do produto reduzido.
+
+### Front-end (SPA)
+
+Fluxos principais disponíveis na SPA:
+- Catálogo: busca, filtros por categoria/tag, detalhe do produto, carrinho.
+- Clientes: listagem e cadastro (POST `/users`).
+- Pedidos: criação a partir do carrinho, listagem com atualização de status.
+- Recomendações (premium): lista produtos relacionados em `/products/:id` e painel opcional no módulo de pedidos.
 
 ### 3. Variante `premium`
 ```bash

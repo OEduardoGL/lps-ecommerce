@@ -13,4 +13,16 @@ Thumbs.db
 
 # Ambiente local
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env.*
+!.env.example
+!front/.env.example
+
+# Build artefacts
+front/dist/
+front/.vite/
+front/.eslintcache
+front/coverage/

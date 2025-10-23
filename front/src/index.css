@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* E-commerce Admin Design System - Light, Clean, Professional */
+
+@layer base {
+  :root {
+    /* Light backgrounds */
+    --background: 0 0% 98%;
+    --foreground: 222 47% 11%;
+
+    /* Cards with subtle elevation */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Professional blue primary */
+    --primary: 220 90% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Light secondary backgrounds */
+    --secondary: 220 15% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    /* Muted elements */
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    /* Success accent (green) */
+    --accent: 142 71% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive states */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 90% 50%;
+
+    /* Border radius */
+    --radius: 0.5rem;
+
+    /* Status colors */
+    --status-pending: 38 92% 50%;
+    --status-processing: 220 90% 50%;
+    --status-shipped: 142 71% 45%;
+    --status-delivered: 160 84% 39%;
+    --status-cancelled: 0 84% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
