@@ -38,18 +38,6 @@ Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce we
 
 `npm run db:seed` para recomeçar com o estado base em um banco local.
 
-## Arquitetura do Front-end
-O SPA em `front/` é organizado por camadas:
-
-```
-front/src
-├── app/            # Shell da aplicação, layout e rotas
-├── features/       # Catálogo, clientes e pedidos (páginas + componentes próprios)
-└── shared/         # UI reutilizável, contextos, hooks, clients REST (catalog/users/orders/recommendations)
-```
-
-Tecnologias principais: React 18 + Vite, React Router, Tailwind + shadcn/ui, TanStack Query e Context API para estado global (carrinho).
-
 ## Configuração de Ambiente
 1. Instale dependências na raiz (`npm install`) e no front (`cd front && npm install`).
 2. Defina a variante padrão copiando o exemplo de variáveis:
