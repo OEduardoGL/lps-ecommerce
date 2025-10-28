@@ -9,6 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import { Switch } from "@/shared/components/ui/switch";
+import { Label } from "@/shared/components/ui/label";
 import ProductCard from "@/features/catalog/components/ProductCard";
 import LoadingSpinner from "@/shared/components/LoadingSpinner";
 import ErrorMessage from "@/shared/components/ErrorMessage";
@@ -26,6 +28,7 @@ const CatalogPage = () => {
   const [selectedTag, setSelectedTag] = useState<string>("");
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [recommendationsEnabled, setRecommendationsEnabled] = useState<boolean>(() => FEATURES.recommendations);
 
   const { customer } = useActiveCustomer();
 
@@ -59,7 +62,7 @@ const CatalogPage = () => {
     let isMounted = true;
 
     const loadRecommendations = async () => {
-      if (!FEATURES.recommendations || !customer) {
+      if (!FEATURES.recommendations || !recommendationsEnabled || !customer) {
         if (isMounted) {
           setRecommendedProducts([]);
           setRecommendationsLoading(false);
@@ -83,10 +86,11 @@ const CatalogPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [customer]);
+  }, [customer, recommendationsEnabled]);
 
   const customerFirstName = customer?.name?.split(" ")[0] ?? "você";
-  const showRecommendations = FEATURES.recommendations && customer && (recommendationsLoading || recommendedProducts.length > 0);
+  const showRecommendations =
+    recommendationsEnabled && FEATURES.recommendations && customer && (recommendationsLoading || recommendedProducts.length > 0);
 
   const handleSearch = () => {
     fetchProducts();
@@ -108,6 +112,21 @@ const CatalogPage = () => {
         </div>
 
         <div className="bg-card rounded-lg border border-border p-6 mb-8">
+          {FEATURES.recommendations && (
+            <div className="flex items-center justify-end mb-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="recommendations-toggle" className="text-sm text-muted-foreground">
+                  Recomendações no catálogo
+                </Label>
+                <Switch
+                  id="recommendations-toggle"
+                  checked={recommendationsEnabled}
+                  onCheckedChange={setRecommendationsEnabled}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
               <div className="relative">
