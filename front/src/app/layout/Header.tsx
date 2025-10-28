@@ -1,14 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
-import { ShoppingCart, Package, Users, ShoppingBag } from "lucide-react";
+import { ShoppingCart, Package, ShoppingBag } from "lucide-react";
 import { useCart } from "@/shared/contexts/CartContext";
+import { useActiveCustomer } from "@/shared/contexts/ActiveCustomerContext";
 
 const Header = () => {
   const location = useLocation();
   const { totalItems } = useCart();
+  const { customer } = useActiveCustomer();
 
   const navItems = [
     { path: "/", label: "Produtos", icon: Package },
-    { path: "/customers", label: "Clientes", icon: Users },
     { path: "/orders", label: "Pedidos", icon: ShoppingBag },
   ];
 
@@ -43,18 +44,26 @@ const Header = () => {
             </nav>
           </div>
 
-          <Link
-            to="/orders"
-            className="flex items-center space-x-2 px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            <span className="font-medium">Carrinho</span>
-            {totalItems > 0 && (
-              <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-                {totalItems}
-              </span>
+          <div className="flex items-center gap-4">
+            {customer && (
+              <div className="hidden md:flex flex-col text-right">
+                <span className="text-xs text-muted-foreground">Bem-vindo(a)</span>
+                <span className="text-sm font-semibold text-foreground">{customer.name}</span>
+              </div>
             )}
-          </Link>
+            <Link
+              to="/orders"
+              className="flex items-center space-x-2 px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span className="font-medium">Carrinho</span>
+              {totalItems > 0 && (
+                <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                  {totalItems}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </div>
     </header>

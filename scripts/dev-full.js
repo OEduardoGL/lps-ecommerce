@@ -41,7 +41,6 @@ function run(command, args, label) {
   });
   child.on('exit', (code) => {
     console.log(`\n[${label}] processo finalizado com código ${code ?? 'null'}`);
-    // Quando um processo termina, encerramos o outro e propagamos o código de saída
     shutdown(code ?? 0);
   });
   child.on('error', (error) => {
@@ -116,7 +115,6 @@ async function tryConnectDatabase(config) {
     try {
       await client.end();
     } catch (endError) {
-      // Ignora erros ao encerrar cliente
     }
   }
 }
@@ -178,7 +176,6 @@ function shutdown(code) {
   if (frontend && !frontend.killed) {
     frontend.kill('SIGINT');
   }
-  // Aguarda um pouco para processos se encerrarem
   setTimeout(() => {
     process.exit(code);
   }, 300);

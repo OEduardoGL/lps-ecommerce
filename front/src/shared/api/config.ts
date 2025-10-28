@@ -5,7 +5,6 @@ const DEFAULT_BASE_URLS = {
   recommendations: "/api/recommendations",
 } as const;
 
-// API configuration and base URLs from environment variables
 export const API_CONFIG = {
   catalog: import.meta.env.VITE_API_CATALOG ?? DEFAULT_BASE_URLS.catalog,
   users: import.meta.env.VITE_API_USERS ?? DEFAULT_BASE_URLS.users,
@@ -23,3 +22,5 @@ export const ENABLED_SERVICES = {
   orders: Boolean(API_CONFIG.orders),
   recommendations: FEATURES.recommendations && Boolean(API_CONFIG.recommendations),
 } as const;
+
+export const ACTIVE_CUSTOMER_ID = import.meta.env.VITE_ACTIVE_CUSTOMER_ID ?? null;

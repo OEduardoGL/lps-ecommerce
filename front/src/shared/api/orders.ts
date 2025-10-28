@@ -25,15 +25,23 @@ export interface Order {
   status: OrderStatus;
   createdAt: string;
   total: number;
+  paymentMethod?: PaymentMethod;
+}
+
+export const PAYMENT_METHOD_OPTIONS = ["pix", "credit_card", "debit_card", "boleto"] as const;
+
+export type PaymentMethod = (typeof PAYMENT_METHOD_OPTIONS)[number];
+
+const knownPaymentMethodSet = new Set<PaymentMethod>(PAYMENT_METHOD_OPTIONS);
+
+export interface UpdateOrderStatusInput {
+  status: OrderStatus;
 }
 
 export interface CreateOrderInput {
   userId: string;
   items: { productId: string; quantity: number }[];
-}
-
-export interface UpdateOrderStatusInput {
-  status: OrderStatus;
+  paymentMethod?: PaymentMethod;
 }
 
 const BASE_URL = API_CONFIG.orders;
@@ -65,6 +73,10 @@ function normalizeOrder(order: any): Order {
     status,
     createdAt: order?.createdAt ?? new Date().toISOString(),
     total,
+    paymentMethod:
+      typeof order?.paymentMethod === "string" && knownPaymentMethodSet.has(order.paymentMethod)
+        ? (order.paymentMethod as PaymentMethod)
+        : undefined,
   };
 }
 

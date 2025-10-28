@@ -13,6 +13,9 @@ import ProductCard from "@/features/catalog/components/ProductCard";
 import LoadingSpinner from "@/shared/components/LoadingSpinner";
 import ErrorMessage from "@/shared/components/ErrorMessage";
 import { catalogApi, Product, ProductFilters } from "@/shared/api/catalog";
+import { recommendationsApi } from "@/shared/api/recommendations";
+import { FEATURES } from "@/shared/api/config";
+import { useActiveCustomer } from "@/shared/contexts/ActiveCustomerContext";
 
 const CatalogPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -21,6 +24,10 @@ const CatalogPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedTag, setSelectedTag] = useState<string>("");
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+
+  const { customer } = useActiveCustomer();
 
   const categories = Array.from(new Set(products.flatMap((p) => p.categories)));
   const tags = Array.from(new Set(products.flatMap((p) => p.tags)));
@@ -47,6 +54,39 @@ const CatalogPage = () => {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadRecommendations = async () => {
+      if (!FEATURES.recommendations || !customer) {
+        if (isMounted) {
+          setRecommendedProducts([]);
+          setRecommendationsLoading(false);
+        }
+        return;
+      }
+
+      if (isMounted) {
+        setRecommendationsLoading(true);
+      }
+
+      const data = await recommendationsApi.getRecommendations(customer.id);
+      if (isMounted) {
+        setRecommendedProducts(data);
+        setRecommendationsLoading(false);
+      }
+    };
+
+    loadRecommendations();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [customer]);
+
+  const customerFirstName = customer?.name?.split(" ")[0] ?? "você";
+  const showRecommendations = FEATURES.recommendations && customer && (recommendationsLoading || recommendedProducts.length > 0);
 
   const handleSearch = () => {
     fetchProducts();
@@ -134,11 +174,34 @@ const CatalogPage = () => {
             <p className="text-muted-foreground">Nenhum produto encontrado</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <>
+            {showRecommendations && (
+              <section className="mb-12">
+                <h2 className="text-2xl font-bold text-foreground mb-4">
+                  Recomendados para {customerFirstName}
+                </h2>
+                {recommendationsLoading ? (
+                  <LoadingSpinner />
+                ) : recommendedProducts.length === 0 ? (
+                  <p className="text-muted-foreground">
+                    Nenhuma recomendação disponível no momento. Explore o catálogo e volte mais tarde.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+                    {recommendedProducts.map((product) => (
+                      <ProductCard key={`recommended-${product.id}`} product={product} />
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

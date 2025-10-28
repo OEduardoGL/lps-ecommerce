@@ -46,7 +46,13 @@ Implementação de uma **Linha de Produto de Software (LPS)** para e-commerce we
    ```
    Ajuste `LPS_VARIANT` para `minimal`, `standard` ou `premium`. Esse valor é usado pelos scripts `npm run start:variant` e `npm run dev:full`.  
    > Se o arquivo `.env` não estiver presente, adotamos `standard` automaticamente.
-3. Para o front, existem variáveis opcionais em `front/.env.example` (URLs das APIs).
+3. Para o front, existem variáveis opcionais em `front/.env.example` (URLs das APIs e flags de feature). Exemplos:
+   ```bash
+   # Habilita recomendações personalizadas (premium)
+   VITE_ENABLE_RECOMMENDATIONS=true
+   # (Opcional) fixa o cliente ativo pelos IDs criados no seed
+   VITE_ACTIVE_CUSTOMER_ID=u-1
+   ```
 
 ## Como Executar o Sistema
 
@@ -103,6 +109,8 @@ docker compose run --rm catalog node scripts/seed.js
    npm run dev
    ```
 3. Acesse http://localhost:8080.
+
+A SPA opera no contexto de um único cliente (primeiro usuário retornado pela API `users` ou o indicado via `VITE_ACTIVE_CUSTOMER_ID`). As recomendações e o histórico exibidos são sempre personalizados para esse perfil.
 
 No modo dev o Vite cria proxies `/api/catalog|users|orders|recommendations -> http://localhost:4101-4104`. Se precisar apontar para hosts diferentes, copie `front/.env.example` para `front/.env` e informe `VITE_API_*`.
 
@@ -191,9 +199,9 @@ curl http://localhost:4103/orders
 
 Fluxos principais disponíveis na SPA:
 - Catálogo: busca, filtros por categoria/tag, detalhe do produto, carrinho.
-- Clientes: listagem e cadastro (POST `/users`).
-- Pedidos: criação a partir do carrinho, listagem com atualização de status.
-- Recomendações (premium): lista produtos relacionados em `/products/:id` e painel opcional no módulo de pedidos.
+- Checkout: finalização de pedidos com seleção do método de pagamento (PIX, cartão de crédito, débito ou boleto).
+- Pedidos: listagem das compras do cliente ativo com atualização automática de status.
+- Recomendações (premium): lista produtos relacionados em `/products/:id` e sugestões personalizadas para o cliente ativo.
 
 ### 3. Variante `premium`
 ```bash

@@ -113,7 +113,6 @@ async function startVariant(variantName) {
     const serviceDef = servicesByFeature[featureKey];
     if (!feature || !serviceDef) {
       console.warn(`Ignorando feature desconhecida '${featureKey}'`);
-      // eslint-disable-next-line no-continue
       continue;
     }
 

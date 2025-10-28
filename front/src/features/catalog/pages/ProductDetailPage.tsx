@@ -10,18 +10,21 @@ import { catalogApi, Product } from "@/shared/api/catalog";
 import { recommendationsApi } from "@/shared/api/recommendations";
 import { useCart } from "@/shared/contexts/CartContext";
 import { FEATURES } from "@/shared/api/config";
+import { useActiveCustomer } from "@/shared/contexts/ActiveCustomerContext";
 import { toast } from "sonner";
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { addItem } = useCart();
+  const { customer } = useActiveCustomer();
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProduct = async () => {
       if (!id) return;
 
       setLoading(true);
@@ -30,11 +33,6 @@ const ProductDetailPage = () => {
       try {
         const productData = await catalogApi.getProductById(id);
         setProduct(productData);
-
-        if (FEATURES.recommendations) {
-          const related = await recommendationsApi.getRelatedProducts(id);
-          setRelatedProducts(related);
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Não foi possível carregar o produto");
       } finally {
@@ -42,8 +40,48 @@ const ProductDetailPage = () => {
       }
     };
 
-    fetchData();
+    fetchProduct();
   }, [id]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadRecommendations = async () => {
+      if (!FEATURES.recommendations || !id) {
+        if (isMounted) {
+          setRelatedProducts([]);
+          setRecommendationsLoading(false);
+        }
+        return;
+      }
+
+      if (isMounted) {
+        setRecommendationsLoading(true);
+      }
+
+      let data: Product[] = [];
+
+      if (customer) {
+        data = await recommendationsApi.getRecommendations(customer.id, id);
+      }
+
+      if (!customer || data.length === 0) {
+        const fallback = await recommendationsApi.getRelatedProducts(id);
+        data = fallback;
+      }
+
+      if (isMounted) {
+        setRelatedProducts(data);
+        setRecommendationsLoading(false);
+      }
+    };
+
+    loadRecommendations();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, customer]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -119,14 +157,24 @@ const ProductDetailPage = () => {
           </div>
         </div>
 
-        {FEATURES.recommendations && relatedProducts.length > 0 && (
+        {FEATURES.recommendations && (
           <div>
-            <h2 className="text-2xl font-bold text-foreground mb-6">Produtos relacionados</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.map((relatedProduct) => (
-                <ProductCard key={relatedProduct.id} product={relatedProduct} />
-              ))}
-            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-6">
+              Recomendados para {customer?.name?.split(" ")[0] ?? "você"}
+            </h2>
+            {recommendationsLoading ? (
+              <LoadingSpinner />
+            ) : relatedProducts.length === 0 ? (
+              <p className="text-muted-foreground">
+                Ainda não temos recomendações para este produto. Explore outros itens da loja!
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {relatedProducts.map((relatedProduct) => (
+                  <ProductCard key={relatedProduct.id} product={relatedProduct} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
