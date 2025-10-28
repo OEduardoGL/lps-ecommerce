@@ -109,6 +109,8 @@ No modo dev o Vite cria proxies `/api/catalog|users|orders|recommendations -> ht
 ### Rodando tudo com um único comando
 Para subir backend (respeitando `LPS_VARIANT` do `.env`) **e** o front ao mesmo tempo:
 ```bash
+npm install
+npm install --prefix front
 npm run dev:full
 ```
 Esse comando mantém os dois processos em paralelo, com logs identificados como `backend` e `frontend`.
